@@ -1,4 +1,4 @@
-name: Master Pipeline Orchestrator (Web)
+name: Master Pipeline Orchestrator
 
 on:
   push:
@@ -7,42 +7,51 @@ on:
     branches: [main, develop]
 
 concurrency:
-  group: web-pipeline-${{ github.ref }}
+  group: master-pipeline-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bayanihubweb:
-    name: Build BayaniHub-Web
+  # ╔══════════════════════════════════════════════════════════════╗
+  # ║  STAGE 1 — BayaniHub-Web Pipeline                         ║
+  # ╚══════════════════════════════════════════════════════════════╝
+  bayanihub-web:
+    name: BayaniHub-Web Pipeline
     uses: ./.github/workflows/front-end-workflow.yml
     with:
       system-dir: BayaniHub-Web
-      sonar-project-key: Tribe3_Web_BayaniHub-Web
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      sonar-project-key: Tribe3-Frontend_BayaniHub-Web
+    secrets: inherit
 
-  damayanweb:
-    name: Build DAMAYAN-Web
-    needs: bayanihubweb
+  # ╔══════════════════════════════════════════════════════════════╗
+  # ║  STAGE 2 — DAMAYAN-Web Pipeline                           ║
+  # ╚══════════════════════════════════════════════════════════════╝
+  damayan-web:
+    name: DAMAYAN-Web Pipeline
+    needs: bayanihub-web
     uses: ./.github/workflows/front-end-workflow.yml
     with:
       system-dir: DAMAYAN-Web
-      sonar-project-key: Tribe3_Web_DAMAYAN-Web
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      sonar-project-key: Tribe3-Frontend_DAMAYAN-Web
+    secrets: inherit
 
-  hopecardweb:
-    name: Build HopeCard-Web
-    needs: damayanweb
+  # ╔══════════════════════════════════════════════════════════════╗
+  # ║  STAGE 3 — HopeCard-Web Pipeline                          ║
+  # ╚══════════════════════════════════════════════════════════════╝
+  hopecard-web:
+    name: HopeCard-Web Pipeline
+    needs: damayan-web
     uses: ./.github/workflows/front-end-workflow.yml
     with:
       system-dir: HopeCard-Web
-      sonar-project-key: Tribe3_Web_HopeCard-Web
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      sonar-project-key: Tribe3-Frontend_HopeCard-Web
+    secrets: inherit
 
-  deploy-staging-bayanihubweb:
-    name: Deploy Staging — BayaniHub-Web
-    needs: bayanihubweb
+  # ╔══════════════════════════════════════════════════════════════╗
+  # ║  STAGE 4 — Deploy to Staging                               ║
+  # ╚══════════════════════════════════════════════════════════════╝
+  deploy-staging-bayanihub-web:
+    name: Staging — BayaniHub-Web
+    needs: [bayanihub-web, damayan-web, hopecard-web]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     uses: ./.github/workflows/deploy-staging.yml
     with:
@@ -51,10 +60,10 @@ jobs:
       artifact-name: BayaniHub-Web-web-build
     secrets: inherit
 
-  deploy-staging-damayanweb:
-    name: Deploy Staging — DAMAYAN-Web
-    needs: damayanweb
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+  deploy-staging-damayan-web:
+    name: Staging — DAMAYAN-Web
+    needs: deploy-staging-bayanihub-web
+    if: ${{ !cancelled() && !failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/deploy-staging.yml
     with:
       system-dir: DAMAYAN-Web
@@ -62,14 +71,46 @@ jobs:
       artifact-name: DAMAYAN-Web-web-build
     secrets: inherit
 
-  deploy-staging-hopecardweb:
-    name: Deploy Staging — HopeCard-Web
-    needs: hopecardweb
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+  deploy-staging-hopecard-web:
+    name: Staging — HopeCard-Web
+    needs: deploy-staging-damayan-web
+    if: ${{ !cancelled() && !failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/deploy-staging.yml
     with:
       system-dir: HopeCard-Web
       app-type: web
       artifact-name: HopeCard-Web-web-build
     secrets: inherit
+
+  # ╔══════════════════════════════════════════════════════════════╗
+  # ║  STAGE 5 — Pipeline Summary                                ║
+  # ╚══════════════════════════════════════════════════════════════╝
+  pipeline-summary:
+    name: Pipeline Summary
+    needs: [bayanihub-web, damayan-web, hopecard-web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pipeline Results
+        run: |
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║        MASTER PIPELINE SUMMARY               ║"
+          echo "╠══════════════════════════════════════════════╣"
+          echo "║ Branch:   ${{ github.ref_name }}"
+          echo "║ Commit:   ${{ github.sha }}"
+          echo "║ Actor:    ${{ github.actor }}"
+          echo "╠══════════════════════════════════════════════╣"
+          echo "║ BayaniHub-Web:     ${{ needs.bayanihub-web.result }}"
+          echo "║ DAMAYAN-Web:       ${{ needs.damayan-web.result }}"
+          echo "║ HopeCard-Web:      ${{ needs.hopecard-web.result }}"
+          echo "╚══════════════════════════════════════════════╝"
+
+          # Fail the summary if any pipeline failed
+          if [[ "${{ needs.bayanihub-web.result }}" == "failure" ]] || \
+             [[ "${{ needs.damayan-web.result }}" == "failure" ]] || \
+             [[ "${{ needs.hopecard-web.result }}" == "failure" ]]; then
+            echo "❌ One or more pipelines failed!"
+            exit 1
+          fi
+          echo "✅ All pipelines completed successfully!"
 
