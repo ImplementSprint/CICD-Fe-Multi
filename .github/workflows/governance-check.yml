@@ -92,4 +92,3 @@ jobs:
           name: ${{ inputs.system-name }}-coverage
           path: ${{ inputs.working-directory }}/coverage
           retention-days: 14
-          retention-days: 14
