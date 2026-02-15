@@ -24,7 +24,7 @@ on:
       tests-path:
         required: false
         type: string
-        default: "src"
+        default: "tests"
         description: "Test files path relative to working directory"
       coverage-report-path:
         required: false
