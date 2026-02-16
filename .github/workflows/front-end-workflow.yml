@@ -98,12 +98,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Fix Vite Entry Point
-        run: |
-          if [ -f "public/index.html" ] && [ ! -f "index.html" ]; then
-            mv public/index.html .
-          fi
-
       - name: Build Application
         run: npm run build
 
