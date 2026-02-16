@@ -161,7 +161,7 @@ jobs:
           name: PadyakPH-Web-coverage
           path: coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -376,7 +376,7 @@ jobs:
           name: HopeCard-Web-coverage
           path: HopeCard-Web/coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -746,7 +746,7 @@ jobs:
           name: REPLACE_WITH_SYSTEM_NAME-coverage
           path: coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -858,7 +858,7 @@ jobs:
           name: REPLACE_WITH_SYSTEM_NAME-coverage
           path: coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -970,7 +970,7 @@ jobs:
           name: REPLACE_WITH_SYSTEM_NAME-coverage
           path: coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -1151,7 +1151,7 @@ jobs:
           name: SYSTEM_C-coverage
           path: SYSTEM_C/coverage
         continue-on-error: true
-      - uses: SonarSource/sonarqube-scan-action@v5.0.0
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
