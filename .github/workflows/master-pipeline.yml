@@ -85,6 +85,7 @@ jobs:
     with:
       system-dir: BayaniHub-Web
       system-name: BayaniHub-Web
+      enable-security-scan: false  # TODO: re-enable once GITLEAKS_LICENSE secret is added
     secrets: inherit
 
   damayan-web:
@@ -95,6 +96,7 @@ jobs:
     with:
       system-dir: DAMAYAN-Web
       system-name: DAMAYAN-Web
+      enable-security-scan: false  # TODO: re-enable once GITLEAKS_LICENSE secret is added
     secrets: inherit
 
   hopecard-web:
@@ -105,6 +107,7 @@ jobs:
     with:
       system-dir: HopeCard-Web
       system-name: HopeCard-Web
+      enable-security-scan: false  # TODO: re-enable once GITLEAKS_LICENSE secret is added
     secrets: inherit
 
   # ╔══════════════════════════════════════════════════════════════╗
