@@ -94,6 +94,15 @@ In GitHub → **Settings → Branches**:
 5. UAT pipeline runs (CI + deploy to UAT) — if it passes, **auto-promotes to `main`**
 6. Main pipeline runs (CI) → **Production Gate (manual approval)** → deploys to production
 
+### Developer Workflow
+
+1. Dev creates `feature/my-feature` from `test`
+2. Dev pushes commits, opens PR → `test`
+3. CI runs on the PR — reviewer sees green/red checks
+4. Merge to `test` — CI runs, and if it passes, **auto-promotes to `uat`**
+5. UAT pipeline runs (CI + deploy to UAT) — if it passes, **auto-promotes to `main`**
+6. Main pipeline runs (CI) → **Production Gate (manual approval)** → deploys to production
+
 ---
 
 ## 3. Single-System Frontend Repo

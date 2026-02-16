@@ -12,14 +12,14 @@
 # ║  └────┬─────┘                                                  ║
 # ║       ▼  PR                                                    ║
 # ║  ┌──────────┐                                                  ║
-# ║  │  uat      │  CI + Deploy UAT → creates PR to main           ║
+# ║  │  uat      │  CI + Deploy UAT → auto-promote to main         ║
 # ║  └────┬─────┘                                                  ║
 # ║       ▼  PR (manual approval)                                  ║
 # ║  ┌──────────┐                                                  ║
 # ║  │  main     │  CI + Production Gate + Deploy to Prod          ║
 # ║  └──────────┘                                                  ║
 # ║                                                                ║
-# ║  Only 2 manual steps: (1) PR to test, (2) approve PR to main   ║
+# ║  Only 2 manual steps: (1) PR to test, (2) prod gate approval   ║
 # ║  All 3 systems run in PARALLEL at every stage.                 ║
 # ╚══════════════════════════════════════════════════════════════════╝
 name: "Master Pipeline Orchestrator"
