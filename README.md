@@ -155,6 +155,7 @@ feature/profile ───┘
 7. **Merge PR to `uat`** — pipeline deploys each project to UAT Vercel
 8. **PR auto-created** — `uat → main` with UAT Vercel links for review
 9. **Approve PR to `main`** — production gate runs, then deploys to Vercel production
+10. **Release tag on `main`** — pipeline creates a release tag (for example: `main-v2026.02.21.456-def5678`)
 
 > See [BRANCHING_AND_MERGE_GUIDE.md](./BRANCHING_AND_MERGE_GUIDE.md) for detailed branching and merge conflict instructions.
 
@@ -185,7 +186,8 @@ The pipeline is defined in `.github/workflows/master-pipeline.yml` and runs on e
 ├─────────────────────────────────────────────────────────────────┤
 │  Stage 4: Production Deploy (main branch only)                  │
 │    ├── Production Readiness Gate                                │
-│    └── Vercel Production deploys (PARALLEL per project)         │
+│    ├── Vercel Production deploys (PARALLEL per project)         │
+│    └── MAIN release tag generation                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Stage 5: Container Images (main branch only)                   │
 │    └── Build & push 3 app images to GHCR                        │

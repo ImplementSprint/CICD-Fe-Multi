@@ -373,42 +373,86 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
+  # ── Step 3C: Versioning (main branch release tag) ─────────────
+  version-main-release:
+    name: "Version Tag — MAIN Release"
+    needs: [deploy-prod-bayanihub, deploy-prod-damayan, deploy-prod-hopecard]
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/main' && github.event_name == 'push' &&
+      (needs.deploy-prod-bayanihub.result == 'success' || needs.deploy-prod-bayanihub.result == 'skipped') &&
+      (needs.deploy-prod-damayan.result == 'success' || needs.deploy-prod-damayan.result == 'skipped') &&
+      (needs.deploy-prod-hopecard.result == 'success' || needs.deploy-prod-hopecard.result == 'skipped')
+    outputs:
+      version_tag: ${{ steps.version.outputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Release Tag
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG="main-v$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "tag=${TAG}" >> $GITHUB_OUTPUT
+            echo "ℹ️ Tag already exists: ${TAG}"
+            exit 0
+          fi
+
+          git tag -a "${TAG}" -m "MAIN release ${TAG}"
+          git push origin "${TAG}"
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "✅ Created release tag: ${TAG}"
+
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 5 — Build & Push Docker Images to GHCR (main only)  ║
   # ║  One image per frontend app                                 ║
   # ╚══════════════════════════════════════════════════════════════╝
   docker-main-bayanihub:
     name: "GHCR — BayaniHub-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: BayaniHub-Web
       image-name: bayanihub-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
 
   docker-main-damayan:
     name: "GHCR — DAMAYAN-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: DAMAYAN-Web
       image-name: damayan-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
 
   docker-main-hopecard:
     name: "GHCR — HopeCard-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: HopeCard-Web
       image-name: hopecard-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
