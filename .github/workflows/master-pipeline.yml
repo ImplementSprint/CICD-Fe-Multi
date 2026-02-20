@@ -208,7 +208,7 @@ jobs:
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 2 — Deploy to TEST via Vercel (test branch, PARALLEL)║
-  # ║  Uses TEST_VERCEL_PROJECT_ID_* secrets per sub-project      ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project           ║
   # ╚══════════════════════════════════════════════════════════════╝
   deploy-test-bayanihub:
     name: "TEST — BayaniHub-Web"
@@ -224,7 +224,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-test-damayan:
     name: "TEST — DAMAYAN-Web"
@@ -240,7 +240,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-test-hopecard:
     name: "TEST — HopeCard-Web"
@@ -256,11 +256,11 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 3 — Deploy to UAT via Vercel (uat branch, PARALLEL)  ║
-  # ║  Uses UAT_VERCEL_PROJECT_ID_* secrets per sub-project       ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project           ║
   # ╚══════════════════════════════════════════════════════════════╝
   deploy-uat-bayanihub:
     name: "UAT — BayaniHub-Web"
@@ -276,7 +276,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-uat-damayan:
     name: "UAT — DAMAYAN-Web"
@@ -292,7 +292,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-uat-hopecard:
     name: "UAT — HopeCard-Web"
@@ -308,11 +308,11 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 4 — Deploy to Prod via Vercel (main branch only)    ║
-  # ║  Uses PROD_VERCEL_PROJECT_ID_* secrets per sub-project     ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project          ║
   # ║  Step 1: Production gate (checklist + audit)               ║
   # ║  Step 2: Deploy to Prod via Vercel                         ║
   # ╚══════════════════════════════════════════════════════════════╝
@@ -345,7 +345,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-prod-damayan:
     name: "Prod — DAMAYAN-Web"
@@ -358,7 +358,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-prod-hopecard:
     name: "Prod — HopeCard-Web"
@@ -371,7 +371,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
   # ── Step 3C: Versioning (main branch release tag) ─────────────
   version-main-release:

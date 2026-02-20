@@ -279,15 +279,9 @@ All secrets are configured in **GitHub → Repo Settings → Secrets and variabl
 |-------------|-------------|------------|
 | `VERCEL_TOKEN` | Vercel API token (shared) | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel team/org ID (shared) | `.vercel/project.json` → `orgId` |
-| `TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web TEST project ID | Vercel Dashboard → Project → Settings → General |
-| `TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web TEST project ID | Same as above |
-| `TEST_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web TEST project ID | Same as above |
-| `UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web UAT project ID | Vercel Dashboard → Project → Settings → General |
-| `UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web UAT project ID | Same as above |
-| `UAT_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web UAT project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web Production project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web Production project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web Production project ID | Same as above |
+| `VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web Vercel project ID | Vercel Dashboard → Project → Settings → General |
+| `VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web Vercel project ID | Same as above |
+| `VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web Vercel project ID | Same as above |
 
 ### SonarCloud Secrets
 
@@ -387,10 +381,8 @@ To add a fourth project (e.g., `NewSystem-Web`):
    sonar.javascript.lcov.reportPaths=...,NewSystem-Web/coverage/lcov.info
    ```
 
-5. **Create Vercel projects** and add secrets:
-   - `TEST_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
-   - `UAT_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
-   - `PROD_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
+5. **Create Vercel project** and add secret:
+   - `VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
 
 6. **Update this README** with the new project info.
 
