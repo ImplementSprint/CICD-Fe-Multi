@@ -6,6 +6,9 @@
 # ║  Required repo secrets (per environment × sub-project):       ║
 # ║    VERCEL_TOKEN              — shared Vercel API token         ║
 # ║    VERCEL_ORG_ID             — shared Vercel Org/Team ID      ║
+# ║    TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB                       ║
+# ║    TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB                         ║
+# ║    TEST_VERCEL_PROJECT_ID_HOPECARD_WEB                        ║
 # ║    UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB                        ║
 # ║    UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB                          ║
 # ║    UAT_VERCEL_PROJECT_ID_HOPECARD_WEB                         ║
@@ -27,11 +30,6 @@ on:
         type: string
         default: "preview"
         description: "Deployment environment (preview|production)"
-      artifact-name:
-        required: false
-        type: string
-        default: ""
-        description: "Build artifact to download (leave empty to build in-place)"
     secrets:
       VERCEL_TOKEN:
         required: true
@@ -40,10 +38,10 @@ on:
       VERCEL_PROJECT_ID:
         required: true
     outputs:
-      deployment-url:
+      deployment_url:
         description: "Vercel deployment URL"
         value: ${{ jobs.vercel-deploy.outputs.url }}
-      deployment-id:
+      deployment_id:
         description: "Vercel deployment ID"
         value: ${{ jobs.vercel-deploy.outputs.id }}
 
@@ -61,13 +59,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Download Build Artifact
-        if: ${{ inputs.artifact-name != '' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.artifact-name }}
-          path: ./${{ inputs.working-directory }}/dist
-
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
@@ -81,7 +72,6 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build with Vercel
-        if: ${{ inputs.artifact-name == '' }}
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
             vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}

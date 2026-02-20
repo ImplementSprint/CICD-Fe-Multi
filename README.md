@@ -140,7 +140,7 @@ feature/profile ───┘
 | Branch | Purpose | Deploys To | Merge Method |
 |--------|---------|------------|--------------|
 | `feature/*` | Individual feature work | Local only | PR → `test` |
-| `test` | Integration testing | CI only | Auto-promote → `uat` |
+| `test` | Integration testing + pre-UAT validation | Vercel Preview (TEST) | Auto-creates PR → `uat` |
 | `uat` | User Acceptance Testing | Vercel Preview (UAT) | Auto-creates PR → `main` |
 | `main` | Production | Vercel Production | Manual PR approval |
 
@@ -149,10 +149,12 @@ feature/profile ───┘
 1. **Create** feature branch from `test`: `git checkout -b feature/my-feature test`
 2. **Push** and create PR to `test`
 3. **CI runs** — lint, test, build for changed projects only
-4. **Merge to `test`** — pipeline auto-promotes to `uat`
-5. **UAT deploys** — each project gets a Vercel preview URL
-6. **PR auto-created** — `uat → main` with Vercel links for review
-7. **Approve PR** — production gate runs, then deploys to Vercel production
+4. **Merge to `test`** — pipeline creates a version tag (for example: `test-v2026.02.21.123-abc1234`)
+5. **`test` deploys** — each project is deployed to TEST Vercel
+6. **PR auto-created** — `test → uat` with TEST Vercel links for review
+7. **Merge PR to `uat`** — pipeline deploys each project to UAT Vercel
+8. **PR auto-created** — `uat → main` with UAT Vercel links for review
+9. **Approve PR to `main`** — production gate runs, then deploys to Vercel production
 
 > See [BRANCHING_AND_MERGE_GUIDE.md](./BRANCHING_AND_MERGE_GUIDE.md) for detailed branching and merge conflict instructions.
 
@@ -175,14 +177,20 @@ The pipeline is defined in `.github/workflows/master-pipeline.yml` and runs on e
 ├─────────────────────────────────────────────────────────────────┤
 │  Stage 1.5: SonarCloud Analysis (all coverage combined)         │
 ├─────────────────────────────────────────────────────────────────┤
-│  Stage 2: UAT Deploy (uat branch only, PARALLEL per project)    │
+│  Stage 2: TEST Deploy (test branch only, PARALLEL per project)  │
 │    └── Vercel Preview deploys                                   │
 ├─────────────────────────────────────────────────────────────────┤
-│  Stage 3: Production Deploy (main branch only)                  │
+│  Stage 3: UAT Deploy (uat branch only, PARALLEL per project)    │
+│    └── Vercel Preview deploys                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Stage 4: Production Deploy (main branch only)                  │
 │    ├── Production Readiness Gate                                │
 │    └── Vercel Production deploys (PARALLEL per project)         │
 ├─────────────────────────────────────────────────────────────────┤
-│  Auto-Promote: test → uat (merge) | uat → main (PR creation)   │
+│  Stage 5: Container Images (main branch only)                   │
+│    └── Build & push 3 app images to GHCR                        │
+├─────────────────────────────────────────────────────────────────┤
+│  PR Promotion: test → uat (PR) | uat → main (PR)               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -269,6 +277,9 @@ All secrets are configured in **GitHub → Repo Settings → Secrets and variabl
 |-------------|-------------|------------|
 | `VERCEL_TOKEN` | Vercel API token (shared) | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel team/org ID (shared) | `.vercel/project.json` → `orgId` |
+| `TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web TEST project ID | Vercel Dashboard → Project → Settings → General |
+| `TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web TEST project ID | Same as above |
+| `TEST_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web TEST project ID | Same as above |
 | `UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web UAT project ID | Vercel Dashboard → Project → Settings → General |
 | `UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web UAT project ID | Same as above |
 | `UAT_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web UAT project ID | Same as above |
@@ -289,7 +300,6 @@ All secrets are configured in **GitHub → Repo Settings → Secrets and variabl
 | Secret Name | Description | Status |
 |-------------|-------------|--------|
 | `GITHUB_TOKEN` | Auto-provided by GitHub Actions | Built-in (no setup needed) |
-| `GITLEAKS_LICENSE` | Gitleaks Enterprise license key | Optional (security scan disabled until added) |
 
 ---
 
@@ -365,8 +375,8 @@ To add a fourth project (e.g., `NewSystem-Web`):
 3. **Update `master-pipeline.yml`**:
    - Add the project to `detect-changes` path filters
    - Add a CI job (copy an existing one, change the `system-dir`)
-   - Add UAT and Prod deploy jobs
-   - Update `auto-promote-to-main` to include the new deploy job
+   - Add TEST, UAT, and Prod deploy jobs
+   - Update `create-pr-to-uat` and `create-pr-to-main` dependencies to include the new deploy job
 
 4. **Update `sonar-project.properties`**:
    ```properties
@@ -376,6 +386,7 @@ To add a fourth project (e.g., `NewSystem-Web`):
    ```
 
 5. **Create Vercel projects** and add secrets:
+   - `TEST_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
    - `UAT_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
    - `PROD_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
 

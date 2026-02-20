@@ -16,8 +16,8 @@
 | Branch    | Purpose                                    | Who Merges Here         | Deploys To          |
 | --------- | ------------------------------------------ | ----------------------- | -------------------- |
 | `main`    | Production-ready code                      | From `uat` (PR approval) | Vercel Production   |
-| `uat`     | User Acceptance Testing                    | Auto-promoted from `test` | Vercel Preview (UAT) |
-| `test`    | Integration testing for combined features  | From `feature/*` branches (PR) | CI only (no deploy) |
+| `uat`     | User Acceptance Testing                    | From `test` (PR approval) | Vercel Preview (UAT) |
+| `test`    | Integration testing for combined features  | From `feature/*` branches (PR) | Vercel Preview (TEST) |
 | `feature/*` | Individual feature or task development   | Developer               | Local dev server     |
 
 ---
@@ -37,8 +37,8 @@ feature/profile ───┘
 2. Always create a **feature branch** from the latest `test` branch.
 3. Merge direction is always **forward**: `feature → test → uat → main`.
 4. Never merge backward (e.g., `main` into `feature`).
-5. `test → uat` is **automatic** after CI passes.
-6. `uat → main` creates a **PR with Vercel preview links** for manual approval.
+5. `test → uat` is **PR-based** (no automatic merge).
+6. `uat → main` is **PR-based** with UAT Vercel links for manual approval.
 
 ---
 
@@ -77,10 +77,12 @@ git push origin feature/your-feature-name
 
 ### 5. After PR is Approved and Merged to `test`
 
-- The pipeline **auto-promotes** `test → uat` after all CI checks pass (no manual action needed).
-- On `uat`, each project is **deployed to Vercel** as a preview.
-- A **PR is auto-created** from `uat → main` with Vercel preview links.
-- Review the Vercel UAT links in the PR, then approve and merge for production.
+- The pipeline creates a **version tag** on every merge to `test` (format: `test-vYYYY.MM.DD.RUN-SHA`).
+- The pipeline deploys each project to **TEST Vercel** and collects deployment links.
+- A **PR is auto-created** from `test → uat` with TEST deployment links.
+- After merging to `uat`, each project is deployed to **UAT Vercel**.
+- A **PR is auto-created** from `uat → main` with UAT deployment links.
+- Review links and merge manually for production release.
 
 ---
 
@@ -93,7 +95,7 @@ This repo uses GitHub Actions and Vercel. Deployments are fully automated — yo
 | Branch | What Runs | What Deploys |
 |--------|-----------|--------------|
 | `feature/*` → `test` (PR) | Lint, Test, Build, SonarCloud | Nothing |
-| `test` (push) | Same CI + auto-merge to `uat` | Nothing |
+| `test` (push) | CI + Vercel TEST deploy + create PR to `uat` | TEST preview URLs (per project) |
 | `uat` (push) | CI + Vercel Preview deploy | UAT preview URLs (per project) |
 | `main` (push via PR) | CI + Production Gate + Vercel Prod deploy | Production URLs |
 
