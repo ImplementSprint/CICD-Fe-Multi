@@ -72,6 +72,8 @@ jobs:
           echo "${SYSTEMS_JSON}" | jq -e 'type == "array" and length > 0' >/dev/null
           echo "${SYSTEMS_JSON}" | jq -e 'all(.[]; (.name|type=="string" and length>0) and (.dir|type=="string" and length>0) and (.image|type=="string" and length>0) and (.vercel_project_secret|type=="string" and length>0))' >/dev/null
 
+          SYSTEMS_JSON=$(echo "${SYSTEMS_JSON}" | jq -c .)
+
           SYSTEMS_LABEL=$(echo "${SYSTEMS_JSON}" | jq -r 'map(.name) | join(", ")')
 
           echo "systems_json=${SYSTEMS_JSON}" >> "$GITHUB_OUTPUT"
