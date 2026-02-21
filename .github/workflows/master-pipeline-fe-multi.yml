@@ -222,14 +222,31 @@ jobs:
         id: version
         run: |
           PREFIX="test-v"
-          LATEST=$(git tag -l "${PREFIX}[0-9]*.[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n 1)
+          LATEST=$(git tag -l "${PREFIX}*" | grep -E '^test-v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
 
           if [ -z "${LATEST}" ]; then
             NEXT_VERSION="1.0.0.0"
           else
             RAW_VERSION="${LATEST#${PREFIX}}"
             IFS='.' read -r MAJOR MINOR PATCH BUILD <<< "${RAW_VERSION}"
-            NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.$((BUILD + 1))"
+
+            BUILD=$((BUILD + 1))
+            if [ "${BUILD}" -ge 10 ]; then
+              BUILD=0
+              PATCH=$((PATCH + 1))
+            fi
+
+            if [ "${PATCH}" -ge 10 ]; then
+              PATCH=0
+              MINOR=$((MINOR + 1))
+            fi
+
+            if [ "${MINOR}" -ge 10 ]; then
+              MINOR=0
+              MAJOR=$((MAJOR + 1))
+            fi
+
+            NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}.${BUILD}"
           fi
 
           TAG="${PREFIX}${NEXT_VERSION}"
@@ -442,7 +459,7 @@ jobs:
           TEST_PREFIX="test-v"
           MAIN_PREFIX="main-v"
 
-          LATEST_TEST=$(git tag -l "${TEST_PREFIX}[0-9]*.[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n 1)
+          LATEST_TEST=$(git tag -l "${TEST_PREFIX}*" | grep -E '^test-v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
           if [ -z "${LATEST_TEST}" ]; then
             echo "❌ No test version tag found. main release tag requires a prior test tag."
             exit 1
@@ -557,6 +574,13 @@ jobs:
           DAMAYAN_URL="${{ needs.deploy-test-damayan.outputs.deployment_url }}"
           HOPECARD_URL="${{ needs.deploy-test-hopecard.outputs.deployment_url }}"
           VERSION_TAG="${{ needs.version-test.outputs.version_tag }}"
+          if [ -z "${VERSION_TAG}" ] || [ "${VERSION_TAG}" = "test-v" ]; then
+            VERSION_TAG=$(git tag -l 'test-v*' | grep -E '^test-v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          fi
+          if [ -z "${VERSION_TAG}" ]; then
+            echo "❌ Unable to resolve TEST version tag for PR body."
+            exit 1
+          fi
           COMMIT_SHA="${{ github.sha }}"
           SHORT_SHA="${COMMIT_SHA:0:7}"
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -782,4 +806,17 @@ jobs:
           echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           # Add Slack/Discord/Email notification here
           # curl -X POST "$SLACK_WEBHOOK" -d '{"text": "Pipeline failed..."}'
+
+  notify-pipeline:
+    name: "Notify Pipeline Status"
+    needs: [pipeline-summary]
+    if: always()
+    uses: ./.github/workflows/notifications.yml
+    with:
+      status: ${{ needs.pipeline-summary.result == 'success' && 'success' || (needs.pipeline-summary.result == 'cancelled' && 'cancelled' || 'failure') }}
+      system-dir: ${{ format('{0}, {1}, {2}', vars.FE_MULTI_APP1_NAME != '' && vars.FE_MULTI_APP1_NAME || 'BayaniHub-Web', vars.FE_MULTI_APP2_NAME != '' && vars.FE_MULTI_APP2_NAME || 'DAMAYAN-Web', vars.FE_MULTI_APP3_NAME != '' && vars.FE_MULTI_APP3_NAME || 'HopeCard-Web') }}
+      pipeline-type: FE Multi Master
+      error-details: ${{ needs.pipeline-summary.result != 'success' && 'Master FE multi pipeline reported failures.' || '' }}
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
