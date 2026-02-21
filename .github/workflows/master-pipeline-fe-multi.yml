@@ -22,7 +22,7 @@
 # ║  Only 2 manual steps: (1) PR to test, (2) prod gate approval   ║
 # ║  All 3 systems run in PARALLEL at every stage.                 ║
 # ╚══════════════════════════════════════════════════════════════════╝
-name: "Master Pipeline Orchestrator"
+name: "Master Pipeline Orchestrator - FE Multi"
 
 on:
   push:
