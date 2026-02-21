@@ -3,18 +3,12 @@
 # ║  Handles UAT (preview) and Production deploys                 ║
 # ║  Monorepo: each sub-project has its own VERCEL_PROJECT_ID     ║
 # ║                                                                ║
-# ║  Required repo secrets (per environment × sub-project):       ║
+# ║  Required repo secrets (per sub-project):                     ║
 # ║    VERCEL_TOKEN              — shared Vercel API token         ║
 # ║    VERCEL_ORG_ID             — shared Vercel Org/Team ID      ║
-# ║    TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB                       ║
-# ║    TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB                         ║
-# ║    TEST_VERCEL_PROJECT_ID_HOPECARD_WEB                        ║
-# ║    UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB                        ║
-# ║    UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB                          ║
-# ║    UAT_VERCEL_PROJECT_ID_HOPECARD_WEB                         ║
-# ║    PROD_VERCEL_PROJECT_ID_BAYANIHUB_WEB                       ║
-# ║    PROD_VERCEL_PROJECT_ID_DAMAYAN_WEB                         ║
-# ║    PROD_VERCEL_PROJECT_ID_HOPECARD_WEB                        ║
+# ║    VERCEL_PROJECT_ID_BAYANIHUB_WEB                            ║
+# ║    VERCEL_PROJECT_ID_DAMAYAN_WEB                              ║
+# ║    VERCEL_PROJECT_ID_HOPECARD_WEB                             ║
 # ╚══════════════════════════════════════════════════════════════════╝
 name: "Reusable: Vercel Deploy"
 
