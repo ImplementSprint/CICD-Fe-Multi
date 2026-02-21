@@ -155,6 +155,7 @@ feature/profile ───┘
 7. **Merge PR to `uat`** — pipeline deploys each project to UAT Vercel
 8. **PR auto-created** — `uat → main` with UAT Vercel links for review
 9. **Approve PR to `main`** — production gate runs, then deploys to Vercel production
+10. **Release tag on `main`** — pipeline creates a release tag (for example: `main-v2026.02.21.456-def5678`)
 
 > See [BRANCHING_AND_MERGE_GUIDE.md](./BRANCHING_AND_MERGE_GUIDE.md) for detailed branching and merge conflict instructions.
 
@@ -185,7 +186,8 @@ The pipeline is defined in `.github/workflows/master-pipeline.yml` and runs on e
 ├─────────────────────────────────────────────────────────────────┤
 │  Stage 4: Production Deploy (main branch only)                  │
 │    ├── Production Readiness Gate                                │
-│    └── Vercel Production deploys (PARALLEL per project)         │
+│    ├── Vercel Production deploys (PARALLEL per project)         │
+│    └── MAIN release tag generation                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Stage 5: Container Images (main branch only)                   │
 │    └── Build & push 3 app images to GHCR                        │
@@ -215,10 +217,10 @@ For each sub-project, create a Vercel project via the dashboard or CLI:
 cd BayaniHub-Web
 vercel link
 # Select or create a project (e.g. "bayanihub-web-uat")
-# Framework Preset: Vite
+# Framework Preset: Next.js
 # Root Directory: ./ (since you're already inside BayaniHub-Web)
 # Build Command: npm run build (or leave default)
-# Output Directory: dist
+# Output Directory: (leave default for Next.js)
 ```
 
 Repeat for each project × environment combination:
@@ -277,15 +279,9 @@ All secrets are configured in **GitHub → Repo Settings → Secrets and variabl
 |-------------|-------------|------------|
 | `VERCEL_TOKEN` | Vercel API token (shared) | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
 | `VERCEL_ORG_ID` | Vercel team/org ID (shared) | `.vercel/project.json` → `orgId` |
-| `TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web TEST project ID | Vercel Dashboard → Project → Settings → General |
-| `TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web TEST project ID | Same as above |
-| `TEST_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web TEST project ID | Same as above |
-| `UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web UAT project ID | Vercel Dashboard → Project → Settings → General |
-| `UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web UAT project ID | Same as above |
-| `UAT_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web UAT project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web Production project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web Production project ID | Same as above |
-| `PROD_VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web Production project ID | Same as above |
+| `VERCEL_PROJECT_ID_BAYANIHUB_WEB` | BayaniHub-Web Vercel project ID | Vercel Dashboard → Project → Settings → General |
+| `VERCEL_PROJECT_ID_DAMAYAN_WEB` | DAMAYAN-Web Vercel project ID | Same as above |
+| `VERCEL_PROJECT_ID_HOPECARD_WEB` | HopeCard-Web Vercel project ID | Same as above |
 
 ### SonarCloud Secrets
 
@@ -335,8 +331,10 @@ Make sure `index.html` exists at the sub-project root (not inside `src/`).
 ### Vercel shows a white/blank page
 
 - **Check the branch being deployed.** If Vercel is building from `main` but your code is only on a feature branch, the build will produce an empty app.
-- Verify `vite.config.js` exists in the sub-project
-- Check the Vercel project **Root Directory** is set to the sub-project folder (e.g., `BayaniHub-Web`)
+- Verify `package.json` exists in the sub-project directory used by the workflow
+- Check the Vercel project **Root Directory** is `.` for that linked sub-project context (do not set `BayaniHub-Web` when the workflow already runs in `BayaniHub-Web`)
+- Confirm `VERCEL_PROJECT_ID_*` secret maps to the same sub-project being deployed
+- In failing runs, verify `.vercel/output` is generated after `vercel build` (required for `vercel deploy --prebuilt`)
 
 ### Tests fail with "Cannot find module"
 
@@ -385,10 +383,8 @@ To add a fourth project (e.g., `NewSystem-Web`):
    sonar.javascript.lcov.reportPaths=...,NewSystem-Web/coverage/lcov.info
    ```
 
-5. **Create Vercel projects** and add secrets:
-   - `TEST_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
-   - `UAT_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
-   - `PROD_VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
+5. **Create Vercel project** and add secret:
+   - `VERCEL_PROJECT_ID_NEWSYSTEM_WEB`
 
 6. **Update this README** with the new project info.
 

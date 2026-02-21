@@ -8,18 +8,18 @@
 # ║  └────┬─────────┘                                              ║
 # ║       ▼  PR                                                    ║
 # ║  ┌──────────┐                                                  ║
-# ║  │  test     │  CI + Deploy TEST → create PR to uat            ║
+# ║  │  test     │  CI only → auto-promote to uat                  ║
 # ║  └────┬─────┘                                                  ║
 # ║       ▼  PR                                                    ║
 # ║  ┌──────────┐                                                  ║
-# ║  │  uat      │  CI + Deploy UAT → create PR to main             ║
+# ║  │  uat      │  CI + Deploy UAT → auto-promote to main         ║
 # ║  └────┬─────┘                                                  ║
 # ║       ▼  PR (manual approval)                                  ║
 # ║  ┌──────────┐                                                  ║
 # ║  │  main     │  CI + Production Gate + Deploy to Prod          ║
 # ║  └──────────┘                                                  ║
 # ║                                                                ║
-# ║  Manual branch promotion via PRs: test→uat and uat→main        ║
+# ║  Only 2 manual steps: (1) PR to test, (2) prod gate approval   ║
 # ║  All 3 systems run in PARALLEL at every stage.                 ║
 # ╚══════════════════════════════════════════════════════════════════╝
 name: "Master Pipeline Orchestrator"
@@ -34,6 +34,9 @@ permissions:
   contents: write
   packages: write
   pull-requests: write
+
+# Optional secret for orgs that block GITHUB_TOKEN PR creation:
+# GH_PR_TOKEN (preferred) or GHPR_TOKEN (legacy)
 
 concurrency:
   group: master-pipeline-${{ github.ref }}
@@ -208,7 +211,7 @@ jobs:
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 2 — Deploy to TEST via Vercel (test branch, PARALLEL)║
-  # ║  Uses TEST_VERCEL_PROJECT_ID_* secrets per sub-project      ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project           ║
   # ╚══════════════════════════════════════════════════════════════╝
   deploy-test-bayanihub:
     name: "TEST — BayaniHub-Web"
@@ -224,7 +227,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-test-damayan:
     name: "TEST — DAMAYAN-Web"
@@ -240,7 +243,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-test-hopecard:
     name: "TEST — HopeCard-Web"
@@ -256,11 +259,11 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.TEST_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 3 — Deploy to UAT via Vercel (uat branch, PARALLEL)  ║
-  # ║  Uses UAT_VERCEL_PROJECT_ID_* secrets per sub-project       ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project           ║
   # ╚══════════════════════════════════════════════════════════════╝
   deploy-uat-bayanihub:
     name: "UAT — BayaniHub-Web"
@@ -276,7 +279,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-uat-damayan:
     name: "UAT — DAMAYAN-Web"
@@ -292,7 +295,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-uat-hopecard:
     name: "UAT — HopeCard-Web"
@@ -308,11 +311,11 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.UAT_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 4 — Deploy to Prod via Vercel (main branch only)    ║
-  # ║  Uses PROD_VERCEL_PROJECT_ID_* secrets per sub-project     ║
+  # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project          ║
   # ║  Step 1: Production gate (checklist + audit)               ║
   # ║  Step 2: Deploy to Prod via Vercel                         ║
   # ╚══════════════════════════════════════════════════════════════╝
@@ -345,7 +348,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BAYANIHUB_WEB }}
 
   deploy-prod-damayan:
     name: "Prod — DAMAYAN-Web"
@@ -358,7 +361,7 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_DAMAYAN_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DAMAYAN_WEB }}
 
   deploy-prod-hopecard:
     name: "Prod — HopeCard-Web"
@@ -371,7 +374,48 @@ jobs:
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PROD_VERCEL_PROJECT_ID_HOPECARD_WEB }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_HOPECARD_WEB }}
+
+  # ── Step 3C: Versioning (main branch release tag) ─────────────
+  version-main-release:
+    name: "Version Tag — MAIN Release"
+    needs: [deploy-prod-bayanihub, deploy-prod-damayan, deploy-prod-hopecard]
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/main' && github.event_name == 'push' &&
+      (needs.deploy-prod-bayanihub.result == 'success' || needs.deploy-prod-bayanihub.result == 'skipped') &&
+      (needs.deploy-prod-damayan.result == 'success' || needs.deploy-prod-damayan.result == 'skipped') &&
+      (needs.deploy-prod-hopecard.result == 'success' || needs.deploy-prod-hopecard.result == 'skipped')
+    outputs:
+      version_tag: ${{ steps.version.outputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Release Tag
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG="main-v$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "tag=${TAG}" >> $GITHUB_OUTPUT
+            echo "ℹ️ Tag already exists: ${TAG}"
+            exit 0
+          fi
+
+          git tag -a "${TAG}" -m "MAIN release ${TAG}"
+          git push origin "${TAG}"
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "✅ Created release tag: ${TAG}"
 
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 5 — Build & Push Docker Images to GHCR (main only)  ║
@@ -379,36 +423,39 @@ jobs:
   # ╚══════════════════════════════════════════════════════════════╝
   docker-main-bayanihub:
     name: "GHCR — BayaniHub-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: BayaniHub-Web
       image-name: bayanihub-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
 
   docker-main-damayan:
     name: "GHCR — DAMAYAN-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: DAMAYAN-Web
       image-name: damayan-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
 
   docker-main-hopecard:
     name: "GHCR — HopeCard-Web"
-    needs: [production-gate]
+    needs: [version-main-release]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/docker-build.yml
     with:
       working-directory: HopeCard-Web
       image-name: hopecard-web
+      release-tag: ${{ needs.version-main-release.outputs.version_tag }}
       push-image: true
       scan-vulnerabilities: true
     secrets: inherit
@@ -435,14 +482,26 @@ jobs:
       (needs.deploy-test-hopecard.result == 'success' || needs.deploy-test-hopecard.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
+      - name: Validate PAT for PR creation
+        env:
+          GH_PR_TOKEN: ${{ secrets.GH_PR_TOKEN }}
+          GHPR_TOKEN: ${{ secrets.GHPR_TOKEN }}
+        run: |
+          if [ -z "${GH_PR_TOKEN}" ] && [ -z "${GHPR_TOKEN}" ]; then
+            echo "❌ Missing PAT secret for PR creation."
+            echo "Add repository secret GH_PR_TOKEN (preferred) or GHPR_TOKEN."
+            echo "Required repository permissions: Pull requests (Read and write), Contents (Read-only or Read and write)."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PR_TOKEN != '' && secrets.GH_PR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Create PR from test → uat
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PR_TOKEN != '' && secrets.GH_PR_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           EXISTING_PR=$(gh pr list --base uat --head test --state open --json number --jq '.[0].number' 2>/dev/null || true)
 
@@ -514,14 +573,26 @@ jobs:
       (needs.deploy-uat-hopecard.result == 'success' || needs.deploy-uat-hopecard.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
+      - name: Validate PAT for PR creation
+        env:
+          GH_PR_TOKEN: ${{ secrets.GH_PR_TOKEN }}
+          GHPR_TOKEN: ${{ secrets.GHPR_TOKEN }}
+        run: |
+          if [ -z "${GH_PR_TOKEN}" ] && [ -z "${GHPR_TOKEN}" ]; then
+            echo "❌ Missing PAT secret for PR creation."
+            echo "Add repository secret GH_PR_TOKEN (preferred) or GHPR_TOKEN."
+            echo "Required repository permissions: Pull requests (Read and write), Contents (Read-only or Read and write)."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PR_TOKEN != '' && secrets.GH_PR_TOKEN || secrets.GHPR_TOKEN }}
 
       - name: Create PR from uat → main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PR_TOKEN != '' && secrets.GH_PR_TOKEN || secrets.GHPR_TOKEN }}
         run: |
           # Check if an open PR from uat → main already exists
           EXISTING_PR=$(gh pr list --base main --head uat --state open --json number --jq '.[0].number' 2>/dev/null || true)
