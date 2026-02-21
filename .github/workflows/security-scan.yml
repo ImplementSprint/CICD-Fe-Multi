@@ -91,19 +91,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install Dependencies
-        run: |
-          if [ ! -f "package.json" ]; then
-            echo "❌ package.json not found in $(pwd)"
-            echo "Set the correct working-directory input."
-            exit 1
-          fi
-
-          if [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ]; then
-            npm ci
-          else
-            echo "⚠️ No lockfile found. Falling back to npm install."
-            npm install --no-audit --no-fund
-          fi
+        run: npm ci
 
       - name: Check Licenses
         run: |
