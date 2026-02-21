@@ -358,6 +358,39 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets[vars.FE_MULTI_APP3_VERCEL_PROJECT_SECRET] }}
 
+  version-uat:
+    name: "Version Tag — UAT"
+    needs: [bayanihub-web, damayan-web, hopecard-web]
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/uat' && github.event_name == 'push' &&
+      (needs.bayanihub-web.result == 'success' || needs.bayanihub-web.result == 'skipped') &&
+      (needs.damayan-web.result == 'success' || needs.damayan-web.result == 'skipped') &&
+      (needs.hopecard-web.result == 'success' || needs.hopecard-web.result == 'skipped')
+    runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve Latest TEST Version Tag
+        id: version
+        run: |
+          PREFIX="test-v"
+          LATEST=$(git tag -l "${PREFIX}[0-9]*.[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n 1)
+
+          if [ -z "${LATEST}" ]; then
+            echo "❌ No test version tag found. UAT version reference requires a prior test tag."
+            exit 1
+          fi
+
+          echo "tag=${LATEST}" >> $GITHUB_OUTPUT
+          echo "✅ Resolved UAT reference tag: ${LATEST}"
+
   # ╔══════════════════════════════════════════════════════════════╗
   # ║  STAGE 4 — Deploy to Prod via Vercel (main branch only)    ║
   # ║  Uses VERCEL_PROJECT_ID_* secrets per sub-project          ║
@@ -569,6 +602,7 @@ jobs:
           DAMAYAN_URL="${{ needs.deploy-test-damayan.outputs.deployment_url }}"
           HOPECARD_URL="${{ needs.deploy-test-hopecard.outputs.deployment_url }}"
           VERSION_TAG="${{ needs.version-test.outputs.version_tag }}"
+          UAT_REFERENCE_TAG="${VERSION_TAG}"
           COMMIT_SHA="${{ github.sha }}"
           SHORT_SHA="${COMMIT_SHA:0:7}"
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -590,6 +624,12 @@ jobs:
           | ${{ vars.FE_MULTI_APP1_NAME != '' && vars.FE_MULTI_APP1_NAME || 'system-1' }} | ${BAYANIHUB_URL:-Not deployed (no changes)} |
           | ${{ vars.FE_MULTI_APP2_NAME != '' && vars.FE_MULTI_APP2_NAME || 'system-2' }} | ${DAMAYAN_URL:-Not deployed (no changes)} |
           | ${{ vars.FE_MULTI_APP3_NAME != '' && vars.FE_MULTI_APP3_NAME || 'system-3' }} | ${HOPECARD_URL:-Not deployed (no changes)} |
+
+          ### 🏷️ Version References
+          | Environment | Version Tag |
+          |-------------|-------------|
+          | TEST | ${VERSION_TAG} |
+          | UAT (reference) | ${UAT_REFERENCE_TAG} |
 
           ### 🔍 Details
           - **Source branch:** test
@@ -621,13 +661,14 @@ jobs:
   # ── Promotion: uat → main (creates PR for manual approval) ──────
   create-pr-to-main:
     name: "Create PR → Main"
-    needs: [bayanihub-web, damayan-web, hopecard-web, deploy-uat-bayanihub, deploy-uat-damayan, deploy-uat-hopecard]
+    needs: [bayanihub-web, damayan-web, hopecard-web, version-uat, deploy-uat-bayanihub, deploy-uat-damayan, deploy-uat-hopecard]
     if: >-
       always() &&
       github.ref == 'refs/heads/uat' && github.event_name == 'push' &&
       (needs.bayanihub-web.result == 'success' || needs.bayanihub-web.result == 'skipped') &&
       (needs.damayan-web.result == 'success' || needs.damayan-web.result == 'skipped') &&
       (needs.hopecard-web.result == 'success' || needs.hopecard-web.result == 'skipped') &&
+      needs.version-uat.result == 'success' &&
       (needs.deploy-uat-bayanihub.result == 'success' || needs.deploy-uat-bayanihub.result == 'skipped') &&
       (needs.deploy-uat-damayan.result == 'success' || needs.deploy-uat-damayan.result == 'skipped') &&
       (needs.deploy-uat-hopecard.result == 'success' || needs.deploy-uat-hopecard.result == 'skipped')
@@ -670,6 +711,8 @@ jobs:
             BAYANIHUB_URL="${{ needs.deploy-uat-bayanihub.outputs.deployment_url }}"
             DAMAYAN_URL="${{ needs.deploy-uat-damayan.outputs.deployment_url }}"
             HOPECARD_URL="${{ needs.deploy-uat-hopecard.outputs.deployment_url }}"
+            VERSION_TAG="${{ needs.version-uat.outputs.version_tag }}"
+            MAIN_REFERENCE_TAG="main-v${VERSION_TAG#test-v}"
             COMMIT_SHA="${{ github.sha }}"
             SHORT_SHA="${COMMIT_SHA:0:7}"
             TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -692,9 +735,17 @@ jobs:
           | ${{ vars.FE_MULTI_APP2_NAME != '' && vars.FE_MULTI_APP2_NAME || 'system-2' }} | ${DAMAYAN_URL:-Not deployed (no changes)} |
           | ${{ vars.FE_MULTI_APP3_NAME != '' && vars.FE_MULTI_APP3_NAME || 'system-3' }} | ${HOPECARD_URL:-Not deployed (no changes)} |
 
+          ### 🏷️ Version References
+          | Environment | Version Tag |
+          |-------------|-------------|
+          | TEST (source sequence) | ${VERSION_TAG} |
+          | UAT (reference) | ${VERSION_TAG} |
+          | MAIN (target release) | ${MAIN_REFERENCE_TAG} |
+
           ### 🔍 Details
           - **Source branch:** uat
           - **Target branch:** main
+          - **Version tag reference:** \`${VERSION_TAG}\`
           - **Latest commit:** \`${SHORT_SHA}\`
           - **Updated at:** ${TIMESTAMP}
           - **Pipeline run:** [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
@@ -713,6 +764,8 @@ jobs:
           BAYANIHUB_URL="${{ needs.deploy-uat-bayanihub.outputs.deployment_url }}"
           DAMAYAN_URL="${{ needs.deploy-uat-damayan.outputs.deployment_url }}"
           HOPECARD_URL="${{ needs.deploy-uat-hopecard.outputs.deployment_url }}"
+          VERSION_TAG="${{ needs.version-uat.outputs.version_tag }}"
+          MAIN_REFERENCE_TAG="main-v${VERSION_TAG#test-v}"
           COMMIT_SHA="${{ github.sha }}"
           SHORT_SHA="${COMMIT_SHA:0:7}"
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -735,9 +788,17 @@ jobs:
           | ${{ vars.FE_MULTI_APP2_NAME != '' && vars.FE_MULTI_APP2_NAME || 'system-2' }} | ${DAMAYAN_URL:-Not deployed (no changes)} |
           | ${{ vars.FE_MULTI_APP3_NAME != '' && vars.FE_MULTI_APP3_NAME || 'system-3' }} | ${HOPECARD_URL:-Not deployed (no changes)} |
 
+          ### 🏷️ Version References
+          | Environment | Version Tag |
+          |-------------|-------------|
+          | TEST (source sequence) | ${VERSION_TAG} |
+          | UAT (reference) | ${VERSION_TAG} |
+          | MAIN (target release) | ${MAIN_REFERENCE_TAG} |
+
           ### 🔍 Details
           - **Source branch:** uat
           - **Target branch:** main
+          - **Version tag reference:** \`${VERSION_TAG}\`
           - **Commit:** \`${SHORT_SHA}\`
           - **Triggered at:** ${TIMESTAMP}
           - **Pipeline run:** [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
@@ -810,6 +871,7 @@ jobs:
       - hopecard-web
       - sonarcloud
       - version-test
+      - version-uat
       - deploy-test-bayanihub
       - deploy-test-damayan
       - deploy-test-hopecard
