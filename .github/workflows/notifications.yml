@@ -155,6 +155,21 @@ jobs:
           else
             IMAGE_URL="${CANCELLED_IMAGE_URL}"
           fi
+
+          # Convert common Google Drive share links to direct-view links for Discord embeds.
+          DRIVE_ID=""
+          if echo "${IMAGE_URL}" | grep -Eq '^https://drive\.google\.com/file/d/[^/]+/view'; then
+            DRIVE_ID=$(echo "${IMAGE_URL}" | sed -E 's#^https://drive\.google\.com/file/d/([^/]+)/view.*#\1#')
+          elif echo "${IMAGE_URL}" | grep -Eq '^https://drive\.google\.com/open\?id='; then
+            DRIVE_ID=$(echo "${IMAGE_URL}" | sed -E 's#^https://drive\.google\.com/open\?id=([^&]+).*$#\1#')
+          elif echo "${IMAGE_URL}" | grep -Eq '^https://drive\.google\.com/uc\?id='; then
+            DRIVE_ID=$(echo "${IMAGE_URL}" | sed -E 's#^https://drive\.google\.com/uc\?id=([^&]+).*$#\1#')
+          fi
+
+          if [ -n "${DRIVE_ID}" ]; then
+            IMAGE_URL="https://drive.google.com/uc?export=view&id=${DRIVE_ID}"
+          fi
+
           echo "image_url=${IMAGE_URL}" >> $GITHUB_OUTPUT
 
           echo "$EMOJI $TITLE"
