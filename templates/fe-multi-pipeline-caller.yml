@@ -39,7 +39,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CENTRAL_PIPELINE_REPO: ImplementSprint/CICD-Fe-Multi
+  CENTRAL_PIPELINE_REPO: ImplementSprint/Central-Template
   CENTRAL_PIPELINE_REF: main
 
 jobs:
@@ -183,6 +183,7 @@ jobs:
     uses: ImplementSprint/CICD-Fe-Multi/.github/workflows/versioning.yml@main
     with:
       mode: test
+      update-package-locks: true
 
   deploy-test:
     name: "TEST — ${{ matrix.system.name }}"
