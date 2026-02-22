@@ -17,6 +17,7 @@ Monorepo for the TriniThrive platform frontend applications — **BayaniHub**, *
 - [Repository Structure](#repository-structure)
 - [Branch Strategy](#branch-strategy)
 - [CI/CD Pipeline](#cicd-pipeline)
+- [Pipeline Setup (FE Single & FE Multi)](#pipeline-setup-fe-single--fe-multi)
 - [Vercel Deployment Setup](#vercel-deployment-setup)
 - [GitHub Secrets Reference](#github-secrets-reference)
 - [SonarCloud Setup](#sonarcloud-setup)
@@ -198,6 +199,94 @@ The pipeline is defined in `.github/workflows/master-pipeline.yml` and runs on e
 
 ---
 
+## Pipeline Setup (FE Single & FE Multi)
+
+This repository supports two master orchestrators:
+
+- FE Single: `.github/workflows/master-pipeline-fe-single.yml`
+- FE Multi: `.github/workflows/master-pipeline-fe-multi.yml`
+
+### FE Single Setup
+
+Required repository secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- Secret referenced by `FE_SINGLE_VERCEL_PROJECT_SECRET` (for example `VERCEL_PROJECT_ID_FE_SINGLE`)
+
+Preferred repository variable:
+
+- `FE_SINGLE_SYSTEM_JSON` (object or one-item array)
+
+Example object format:
+
+```json
+{
+   "name": "Frontend-Root",
+   "dir": ".",
+   "image": "fe-single-web",
+   "vercel_project_secret": "VERCEL_PROJECT_ID_FE_SINGLE"
+}
+```
+
+PR token for promotion PRs uses `GH_PR_TOKEN` directly (org/repo secret) and does not need to be included in JSON.
+
+No PR token variable is required for FE Single.
+
+Optional notification secrets:
+
+- `DISCORD_WEBHOOK_URL`
+- `SLACK_WEBHOOK_URL`
+
+### FE Multi Setup (JSON Systems)
+
+FE Multi now supports a dynamic systems list through repository variable:
+
+- `FE_MULTI_SYSTEMS_JSON`
+
+Expected JSON format:
+
+```json
+[
+   {
+      "name": "BayaniHub-Web",
+      "dir": "BayaniHub-Web",
+      "image": "bayanihub-web",
+      "vercel_project_secret": "VERCEL_PROJECT_ID_BAYANIHUB_WEB"
+   },
+   {
+      "name": "DAMAYAN-Web",
+      "dir": "DAMAYAN-Web",
+      "image": "damayan-web",
+      "vercel_project_secret": "VERCEL_PROJECT_ID_DAMAYAN_WEB"
+   },
+   {
+      "name": "HopeCard-Web",
+      "dir": "HopeCard-Web",
+      "image": "hopecard-web",
+      "vercel_project_secret": "VERCEL_PROJECT_ID_HOPECARD_WEB"
+   }
+]
+```
+
+Required shared secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- Per-app Vercel project ID secrets referenced by each system entry's `vercel_project_secret`
+
+PR token for FE Multi promotions also uses `GH_PR_TOKEN` directly (org/repo secret).
+
+### Manual Operations (`workflow_dispatch`)
+
+Both FE Single and FE Multi support manual trigger inputs:
+
+- `run_deploy` — run deploy jobs
+- `run_promotion` — run PR promotion jobs
+- `dry_run` — skip deploy/tag push and print PR body preview
+
+---
+
 ## Vercel Deployment Setup
 
 Each sub-project is deployed as a **separate Vercel project**. You need **6 Vercel projects** total (3 UAT + 3 Production), or 3 projects using Vercel's preview/production environments.
@@ -290,6 +379,12 @@ All secrets are configured in **GitHub → Repo Settings → Secrets and variabl
 | `SONAR_TOKEN` | SonarCloud authentication token | [sonarcloud.io/account/security](https://sonarcloud.io/account/security) |
 | `SONAR_ORGANIZATION` | SonarCloud organization key | SonarCloud → Organization → Settings |
 | `SONAR_PROJECT_KEY` | SonarCloud project key | SonarCloud → Project → Information |
+
+Scope policy used in workflows:
+
+- `SONAR_PROJECT_KEY`: repository secret
+- `SONAR_ORGANIZATION`: organization secret (shared to this repository)
+- `SONAR_TOKEN`: organization secret (shared to this repository)
 
 ### Other Secrets
 
